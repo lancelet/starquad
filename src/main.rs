@@ -25,7 +25,7 @@ fn main() -> io::Result<()> {
     )?;
     let gz_decoder = GzDecoder::new(&test_file);
 
-    // debugging: dump out each byte from the file to check that gz decryption is working
+    // debugging: dump out each byte from the file to check that gz decoding is working
     /*
     for byte in gz_decoder.bytes() {
         print!("{}", byte.unwrap() as char);
