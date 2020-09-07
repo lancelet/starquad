@@ -1,13 +1,16 @@
+#![allow(dead_code)]
+
 extern crate csv;
 extern crate flate2;
 extern crate serde;
+extern crate num;
 
 use csv::{ReaderBuilder, Terminator, Trim};
 use flate2::read::GzDecoder;
 use serde::Deserialize;
 use std::fs::File;
 use std::io;
-use std::io::Read;
+// use std::io::Read;
 
 #[derive(Debug, Deserialize)]
 struct GaiaRecord {

@@ -10,3 +10,9 @@ authors = ["Jonathan Merritt <j.s.merritt@gmail.com>"]
 csv = "1.1"
 flate2 = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+num = "0.3.0"
+
+[dev-dependencies]
+paste = "1.0.1"
+quickcheck = "0.9"
+quickcheck_macros = "0.9"
