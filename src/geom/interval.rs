@@ -201,9 +201,8 @@ create_float_interval_ops!(f64);
 //// Tests
 
 #[cfg(test)]
-mod test {
+pub mod test {
     use geom::interval::{Interval, IntervalDomain};
-    use num::{CheckedAdd, CheckedSub};
     use paste::paste;
     use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::quickcheck;
@@ -285,52 +284,63 @@ mod test {
         assert!(!interval.contains(&4.1));
     }
 
-    #[derive(Clone, Debug)]
-    struct IntInterval<S>(Interval<S>);
-
-    impl<S> Arbitrary for IntInterval<S>
-    where
-        S: Arbitrary + IntervalDomain + CheckedSub + CheckedAdd,
-    {
-        fn arbitrary<G>(g: &mut G) -> Self
-        where
-            G: Gen,
-        {
-            let mut start: S;
-            let mut end: S;
-            let diameter: S;
-            loop {
-                start = S::arbitrary(g);
-                end = S::arbitrary(g);
-                let opt_diameter = end
-                    .checked_sub(&start)
-                    .and_then(|pdiam| pdiam.checked_add(&S::one()));
-                if let Some(d) = opt_diameter {
-                    diameter = d;
-                    break;
+    macro_rules! create_arbitrary_int_interval {
+        ($t:ty) => {
+            impl Arbitrary for Interval<$t> {
+                fn arbitrary<G>(g: &mut G) -> Self
+                where
+                    G: Gen,
+                {
+                    let mut start: $t;
+                    let mut end: $t;
+                    let diameter: $t;
+                    loop {
+                        start = <$t>::arbitrary(g);
+                        end = <$t>::arbitrary(g);
+                        let opt_diameter = end
+                            .checked_sub(start)
+                            .and_then(|pdiam| pdiam.checked_add(1));
+                        if let Some(d) = opt_diameter {
+                            diameter = d;
+                            break;
+                        }
+                    }
+                    Interval::new(start, diameter).expect("Arbitrary int interval")
                 }
             }
-            IntInterval(Interval::new(start, diameter).expect("Arbitrary IntInterval"))
-        }
+        };
     }
 
-    #[derive(Clone, Debug)]
-    struct FloatInterval<S>(Interval<S>);
-
-    impl<S> Arbitrary for FloatInterval<S>
-    where
-        S: Arbitrary + IntervalDomain,
-    {
-        fn arbitrary<G>(g: &mut G) -> Self
-        where
-            G: Gen,
-        {
-            let start = S::arbitrary(g);
-            let end = S::arbitrary(g);
-            let diameter = end - start.clone();
-            FloatInterval(Interval::new(start, diameter).expect("Arbitrary FloatInterval"))
-        }
+    macro_rules! create_arbitrary_float_interval {
+        ($t:ty) => {
+            impl Arbitrary for Interval<$t> {
+                fn arbitrary<G>(g: &mut G) -> Self
+                where
+                    G: Gen,
+                {
+                    let start = <$t>::arbitrary(g);
+                    let end = <$t>::arbitrary(g);
+                    let diameter = end - start;
+                    Interval::new(start, diameter).expect("Arbitrary float interval")
+                }
+            }
+        };
     }
+
+    create_arbitrary_int_interval!(i8);
+    create_arbitrary_int_interval!(i16);
+    create_arbitrary_int_interval!(i32);
+    create_arbitrary_int_interval!(i64);
+    create_arbitrary_int_interval!(i128);
+
+    create_arbitrary_int_interval!(u8);
+    create_arbitrary_int_interval!(u16);
+    create_arbitrary_int_interval!(u32);
+    create_arbitrary_int_interval!(u64);
+    create_arbitrary_int_interval!(u128);
+
+    create_arbitrary_float_interval!(f32);
+    create_arbitrary_float_interval!(f64);
 
     /// Property test for consistency between `contains` and `intersection`.
     ///
@@ -352,48 +362,31 @@ mod test {
         }
     }
 
-    macro_rules! check_int_intersection_point_membership {
+    macro_rules! check_intersection_point_membership {
         ($t:ty) => {
             paste! {
                 #[quickcheck]
                 fn [<$t _intersection_point_membership>](
-                    a: IntInterval<$t>,
-                    b: IntInterval<$t>,
+                    a: Interval<$t>,
+                    b: Interval<$t>,
                     value: $t
                 ) {
-                    intersection_point_membership(a.0, b.0, value);
+                    intersection_point_membership(a, b, value);
                 }
             }
         };
     }
 
-    macro_rules! check_float_intersection_point_membership {
-        ($t:ty) => {
-            paste! {
-                #[quickcheck]
-                fn [<$t _intersection_point_membership>](
-                    a: FloatInterval<$t>,
-                    b: FloatInterval<$t>,
-                    value: $t
-                ) {
-                    intersection_point_membership(a.0, b.0, value);
-                }
-            }
-        };
-    }
-
-    check_int_intersection_point_membership!(i8);
-    check_int_intersection_point_membership!(i16);
-    check_int_intersection_point_membership!(i32);
-    check_int_intersection_point_membership!(i64);
-    check_int_intersection_point_membership!(i128);
-
-    check_int_intersection_point_membership!(u8);
-    check_int_intersection_point_membership!(u16);
-    check_int_intersection_point_membership!(u32);
-    check_int_intersection_point_membership!(u64);
-    check_int_intersection_point_membership!(u128);
-
-    check_float_intersection_point_membership!(f32);
-    check_float_intersection_point_membership!(f64);
+    check_intersection_point_membership!(i8);
+    check_intersection_point_membership!(i16);
+    check_intersection_point_membership!(i32);
+    check_intersection_point_membership!(i64);
+    check_intersection_point_membership!(i128);
+    check_intersection_point_membership!(u8);
+    check_intersection_point_membership!(u16);
+    check_intersection_point_membership!(u32);
+    check_intersection_point_membership!(u64);
+    check_intersection_point_membership!(u128);
+    check_intersection_point_membership!(f32);
+    check_intersection_point_membership!(f64);
 }
