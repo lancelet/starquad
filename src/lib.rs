@@ -6,4 +6,5 @@ extern crate quickcheck;
 #[cfg(test)]
 extern crate quickcheck_macros;
 
+pub mod accel2d;
 pub mod geom;
